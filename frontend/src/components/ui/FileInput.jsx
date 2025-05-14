@@ -1,14 +1,15 @@
 import React from 'react';
 
-function FileInput({ onChange, disabled }) {
+function FileInput({ onChange, disabled, multiple }) { // Added 'multiple' prop
     return (
         <label className="block w-full cursor-pointer">
-            <span className="sr-only">Choose PDF file</span> {/* For accessibility */}
+            <span className="sr-only">Choose PDF file(s)</span>
             <input
                 type="file"
-                accept="application/pdf" // Restrict to PDF files
+                accept="application/pdf"
                 onChange={onChange}
                 disabled={disabled}
+                multiple={multiple} // Use the multiple prop here
                 className="block w-full text-sm text-gray-500
                            file:mr-4 file:py-3 file:px-5
                            file:rounded-lg file:border-0
@@ -21,5 +22,4 @@ function FileInput({ onChange, disabled }) {
         </label>
     );
 }
-
 export default FileInput;

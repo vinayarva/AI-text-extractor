@@ -1,9 +1,9 @@
 import express from "express";
-import upload from "../middleware/multer.js";
-import { processDocumentUpload } from "../controllers/handleDocumentUploadAndProcess.js";
+import { uploadMultiple } from "../middleware/multer.js"; 
+import { processMultipleDocuments } from "../controllers/handleDocumentUploadAndProcess.js";
 
 const route = express.Router();
 
-route.post("/upload", upload.single("file"), processDocumentUpload);
+route.post("/", uploadMultiple, processMultipleDocuments);
 
 export default route;

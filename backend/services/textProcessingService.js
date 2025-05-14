@@ -1,7 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
 
+const Api_key = process.env.API_KEY
+
 const ai = new GoogleGenAI({
-  apiKey: 'AIzaSyBux3oDBDdzFv7hlqIXjJ9gM31w11JMCq4',
+  apiKey: Api_key,
 });
 
 const extractInsightsFromText = async (extractedText) => {

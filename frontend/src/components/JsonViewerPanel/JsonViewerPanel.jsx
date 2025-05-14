@@ -10,7 +10,7 @@ function JsonViewerPanel({ jsonData, viewMode, onSetViewMode }) {
         <JsonDisplay jsonData={jsonData} viewMode={viewMode} />
       </div>
       <footer className="mt-6 text-center text-sm text-gray-500">
-        <p>&copy; {new Date().getFullYear()} PDF Inspector. For demonstration purposes.</p>
+        <p>&copy; {new Date().getFullYear()} AI PDF Extractor . For demonstration purposes.</p>
       </footer>
     </div>
   );

@@ -3,63 +3,48 @@ import performOcrOnGcsPdf from "../services/gcsOcrService.js";
 import getJsonFromGCS from "../services/gcsDataFetcherService.js";
 import extractInsightsFromText from "../services/textProcessingService.js";
 
-export const processDocumentUpload = async (req, res) => {
+// This function is responsible for sending data using SSE
+export const processMultipleDocuments = async (req, res) => {
   try {
-    //check for file existence
-    if (!req.file) {
-      return res
-        .status(400)
-        .json({ message: "No file uploaded.Please provide a file" });
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No files uploaded." });
     }
 
-    // if (req.file.mimetype !== 'application/pdf') {
-    //   return res.status(400).json({ message: 'Invalid file type. Only PDF files are accepted.' });
-    // }
+    // Set up the SSE response header
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    
+    // Emit the results as files are processed
+    for (const file of req.files) {
+      const gcsFileUrl = await uploadFileToGCS(file);
+      file.buffer = null;
 
-    // upload the file to google cloud service
-    const gcsFileUrl = await uploadFileToGCS(req.file);
+      const ocrOutputGcsUri = await performOcrOnGcsPdf(gcsFileUrl);
+      const ocrJsonResponse = await getJsonFromGCS(ocrOutputGcsUri);
+      const fullText = ocrJsonResponse?.responses?.[0]?.fullTextAnnotation?.text;
 
-    if (req.file && req.file.buffer) {
-      req.file.buffer = null;
+      let responseData = { fileName: file.originalname };
+
+      if (!fullText) {
+        responseData.error = "OCR text not found";
+      } else {
+        const structuredData = await extractInsightsFromText(fullText);
+        responseData.processedData = structuredData;
+      }
+
+      // Send the data to the client (each file processed)
+      res.write(`data: ${JSON.stringify(responseData)}\n\n`);
+
+  
     }
 
-    // Perform OCR on the uploaded file in GCS
-    const ocrOutputGcsUri = await performOcrOnGcsPdf(gcsFileUrl);
+    // Close the connection after all files are processed
+    res.write('data: {"message": "Processing complete"}\n\n');
+    res.end();
 
-    // Get the JSON content from the OCR output URI in GCS
-    const ocrJsonResponse = await getJsonFromGCS(ocrOutputGcsUri);
-
-    const fullText = ocrJsonResponse?.responses?.[0]?.fullTextAnnotation?.text;
-
-    //check if the response is present
-    if (!fullText) {
-      console.error(
-        "Could not extract fullTextAnnotation from OCR response:",
-        ocrJsonResponse
-      );
-      return res
-        .status(500)
-        .json({
-          message:
-            "Failed to extract text from OCR result. The structure might be unexpected.",
-        });
-    }
-
-    const structuredData = await extractInsightsFromText(fullText);
-
-    // Respond with the file URL after successful upload
-    return res
-      .status(200)
-      .json({
-        message: "File processed successfully.",
-        processedData: structuredData,
-      });
   } catch (err) {
-    console.error("Error during document processing pipeline:", err);
-    res
-      .status(500)
-      .json({ message: "An error occurred during file processing." });
+    console.error("Multi-file processing error:", err);
+    res.status(500).json({ message: "Error processing files." });
   }
 };
-
-
