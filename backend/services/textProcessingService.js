@@ -3,7 +3,6 @@ import { GoogleGenAI } from "@google/genai";
 const Api_key = process.env.API_KEY
 
 const ai = new GoogleGenAI({
-  apiKey: Api_key,
   apiKey: 'YOUR API KEY',
 });
 
